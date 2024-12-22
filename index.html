@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Big Red Button with Timer</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background-color: #f0f0f0;
+    }
+
+    .timer {
+      font-size: 2em;
+      font-weight: bold;
+      margin-bottom: 20px;
+      color: #333;
+      font-family: Arial, sans-serif;
+    }
+
+    .big-red-button {
+      width: 15vw;
+      height: 15vw;
+      max-width: 150px;
+      max-height: 150px;
+      min-width: 100px;
+      min-height: 100px;
+      background-color: red;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      font-size: 1.2em;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .big-red-button:hover {
+      transform: scale(1.1);
+      box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .big-red-button:active {
+      transform: scale(1);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    #time-list {
+      list-style: none;
+      padding: 0;
+      margin: 20px 0 0;
+      font-family: Arial, sans-serif;
+      color: #333;
+    }
+
+    #time-list li {
+      font-size: 1em;
+      margin: 5px 0;
+    }
+  </style>
+</head>
+<body>
+<div class="timer" id="timer">0.00</div>
+<button class="big-red-button" id="button">Start</button>
+<!-- Add an empty unordered list for previous times -->
+<ul id="time-list"></ul>
+
+<script>
+  // Variables to control the timer
+  let startTime = 0; // Starting time in milliseconds
+  let elapsedTime = 0; // Elapsed time in milliseconds
+  let timerRunning = false; // Timer state
+  let timerInterval = null; // Used to store the interval function
+  const timerElement = document.getElementById('timer'); // Timer display element
+  const buttonElement = document.getElementById('button'); // Button element
+  const timeListElement = document.getElementById('time-list'); // List element for times
+
+  // Function to update the timer display
+  function updateTimer() {
+    const diff = performance.now() - startTime + elapsedTime; // Calculate total elapsed time
+    const seconds = Math.floor(diff / 1000); // Whole seconds
+    const hundredths = Math.floor((diff % 1000) / 10); // Hundredths of a second
+    timerElement.textContent = `${seconds}.${hundredths.toString().padStart(2, '0')}`;
+  }
+
+  // Function to append the previous time to the list
+  function appendTimeToList(time) {
+    const listItem = document.createElement('li'); // Create a new list item element
+    listItem.textContent = time; // Set the text content to the given time
+    timeListElement.prepend(listItem); // Add the new item to the beginning of the list
+  }
+
+  // Function to handle button click
+  function handleButtonClick() {
+    if (!timerRunning) {
+      // START or RESET and START
+      if (elapsedTime > 0) {
+        // Append the previous time to the list before resetting
+        appendTimeToList(timerElement.textContent);
+
+        // Reset the timer
+        elapsedTime = 0;
+        timerElement.textContent = '0.00'; // Reset display
+      }
+      startTime = performance.now(); // Set new start time
+      timerInterval = setInterval(updateTimer, 10); // Update every 10ms
+      timerRunning = true;
+      buttonElement.textContent = 'Stop'; // Update button label
+    } else {
+      // STOP the timer
+      clearInterval(timerInterval); // Stop updating the timer
+      elapsedTime += performance.now() - startTime; // Accumulate elapsed time
+      timerRunning = false;
+      buttonElement.textContent = 'Reset & Start'; // Update button label
+    }
+  }
+
+  // Add event listener to the button
+  buttonElement.addEventListener('click', handleButtonClick);
+</script>
+</body>
+</html>
