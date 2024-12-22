@@ -128,6 +128,9 @@
 
   // Add event listener to the button
   buttonElement.addEventListener('click', handleButtonClick);
+  // Prevent dragging behavior on the button
+  buttonElement.addEventListener('dragstart', (event) => event.preventDefault());
+  buttonElement.addEventListener('mousedown', (event) => event.preventDefault());
 </script>
 </body>
 </html>
