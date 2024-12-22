@@ -24,6 +24,8 @@
     }
 
     .big-red-button {
+      pointer-events: none;
+      user-select: none;
       width: 40vw;
       height: 40vw;
       max-width: 150px;
@@ -65,7 +67,7 @@
   </style>
 </head>
 <body>
-<div class="timer" id="timer">0.00</div>
+<div class="timer" id="timer">0:00.00</div>
 <button draggable="false" class="big-red-button" id="button">Start</button>
 <!-- Add an empty unordered list for previous times -->
 <ul id="time-list"></ul>
@@ -81,13 +83,18 @@
   const timeListElement = document.getElementById('time-list'); // List element for times
 
   // Function to update the timer display
+  // Function to update the timer display
   function updateTimer() {
     const diff = performance.now() - startTime + elapsedTime; // Calculate total elapsed time
-    const seconds = Math.floor(diff / 1000); // Whole seconds
+    const minutes = Math.floor((diff / (1000 * 60))); // Calculate whole minutes
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000); // Remaining whole seconds
     const hundredths = Math.floor((diff % 1000) / 10); // Hundredths of a second
-    timerElement.textContent = `${seconds}.${hundredths.toString().padStart(2, '0')}`;
-  }
 
+    // Update timer display to show minutes, seconds, and hundredths
+    timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}.${hundredths
+            .toString()
+            .padStart(2, '0')}`;
+  }
   // Function to append the previous time to the list
   function appendTimeToList(time) {
     const listItem = document.createElement('li'); // Create a new list item element
