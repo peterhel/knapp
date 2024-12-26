@@ -1,136 +1,238 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Big Red Button with Timer</title>
-  <style>
-    body {
-      margin: 0;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      background-color: #f0f0f0;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Big Red Button with Timer</title>
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #f0f0f0;
+        }
 
-    .timer {
-      font-size: 2em;
-      font-weight: bold;
-      margin-bottom: 20px;
-      color: #333;
-      font-family: Arial, sans-serif;
-    }
+        #timers {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            padding: 0 20px;
+            box-sizing: border-box;
+        }
 
-    .big-red-button {
-      user-select: none;
-      width: 40vw;
-      height: 40vw;
-      max-width: 150px;
-      max-height: 150px;
-      min-width: 100px;
-      min-height: 100px;
-      background-color: red;
-      color: white;
-      border: none;
-      border-radius: 50%;
-      font-size: 1.2em;
-      cursor: pointer;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
+        .timer-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
 
-    .big-red-button:hover {
-      transform: scale(1.1);
-      box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
-    }
+        .timer {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+            font-family: Arial, sans-serif;
+        }
 
-    .big-red-button:active {
-      transform: scale(1);
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    }
+        .big-red-button {
+            user-select: none;
+            width: 40vw;
+            height: 40vw;
+            max-width: 150px;
+            max-height: 150px;
+            min-width: 100px;
+            min-height: 100px;
+            background-color: red;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 1.2em;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
 
-    #time-list {
-      list-style: none;
-      padding: 0;
-      margin: 20px 0 0;
-      font-family: Arial, sans-serif;
-      color: #333;
-    }
+        .big-red-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
+        }
 
-    #time-list li {
-      font-size: 1em;
-      margin: 5px 0;
-    }
-  </style>
+        .big-red-button:active {
+            transform: scale(1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        #add {
+            background-color: #ff4d4d;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .remove-button {
+            background-color: #ff4d4d;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .remove-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .remove-button:active {
+            transform: scale(1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        #time-list {
+            list-style: none;
+            padding: 0;
+            margin: 20px 0 0;
+            font-family: Arial, sans-serif;
+            color: #333;
+        }
+
+        #time-list li {
+            font-size: 1em;
+            margin: 5px 0;
+        }
+
+        #main {
+            display: flex;
+        }
+    </style>
 </head>
 <body>
-<div class="timer" id="timer">0:00.00</div>
-<button draggable="false" class="big-red-button" id="button">Start</button>
-<!-- Add an empty unordered list for previous times -->
-<ul id="time-list"></ul>
-
+<div id="main">
+    <div id="timers">
+        <!-- Första timern utan minusknapp -->
+        <div class="timer-container">
+            <div class="timer">0:00.00</div>
+            <button draggable="false" class="big-red-button">Start</button>
+            <ul class="time-list"></ul>
+        </div>
+    </div>
+    <button id="add">+</button>
+</div>
 <script>
-  // Variables to control the timer
-  let startTime = 0; // Starting time in milliseconds
-  let elapsedTime = 0; // Elapsed time in milliseconds
-  let timerRunning = false; // Timer state
-  let timerInterval = null; // Used to store the interval function
-  const timerElement = document.getElementById('timer'); // Timer display element
-  const buttonElement = document.getElementById('button'); // Button element
-  const timeListElement = document.getElementById('time-list'); // List element for times
+    const addButton = document.getElementById('add');
+    const timersContainer = document.getElementById('timers');
 
-  // Function to update the timer display
-  // Function to update the timer display
-  function updateTimer() {
-    const diff = performance.now() - startTime + elapsedTime; // Calculate total elapsed time
-    const minutes = Math.floor((diff / (1000 * 60))); // Calculate whole minutes
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000); // Remaining whole seconds
-    const hundredths = Math.floor((diff % 1000) / 10); // Hundredths of a second
+    // Funktion för att skapa en ny individuell timer
+    function createNewTimer(container, allowRemove = true) {
+        let startTime = 0;
+        let elapsedTime = 0;
+        let timerRunning = false;
+        let timerInterval = null;
 
-    // Update timer display to show minutes, seconds, and hundredths
-    timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}.${hundredths
-            .toString()
-            .padStart(2, '0')}`;
-  }
-  // Function to append the previous time to the list
-  function appendTimeToList(time) {
-    const listItem = document.createElement('li'); // Create a new list item element
-    listItem.textContent = time; // Set the text content to the given time
-    timeListElement.prepend(listItem); // Add the new item to the beginning of the list
-  }
+        // Hitta elementen i containern
+        const timerElement = container.querySelector('.timer');
+        const buttonElement = container.querySelector('.big-red-button');
+        const timeListElement = container.querySelector('.time-list');
 
-  // Function to handle button click
-  function handleButtonClick() {
-    if (!timerRunning) {
-      // START or RESET and START
-      if (elapsedTime > 0) {
-        // Append the previous time to the list before resetting
-        appendTimeToList(timerElement.textContent);
+        // Hantera borttagning av timer om det tillåts
+        if (allowRemove) {
+            const removeButton = document.createElement('button');
+            removeButton.classList.add('remove-button');
+            removeButton.textContent = '-';
+            container.appendChild(removeButton);
 
-        // Reset the timer
-        elapsedTime = 0;
-        timerElement.textContent = '0.00'; // Reset display
-      }
-      startTime = performance.now(); // Set new start time
-      timerInterval = setInterval(updateTimer, 10); // Update every 10ms
-      timerRunning = true;
-      buttonElement.textContent = 'Stop'; // Update button label
-    } else {
-      // STOP the timer
-      clearInterval(timerInterval); // Stop updating the timer
-      elapsedTime += performance.now() - startTime; // Accumulate elapsed time
-      timerRunning = false;
-      buttonElement.textContent = 'Reset & Start'; // Update button label
+            // Eventlistener: Ta bort containern
+            removeButton.addEventListener('click', () => {
+                container.remove();
+            });
+        }
+
+        // Uppdatera displayen för denna timer
+        function updateTimer() {
+            const diff = performance.now() - startTime + elapsedTime; // Total tid
+            const minutes = Math.floor(diff / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            const hundredths = Math.floor((diff % 1000) / 10);
+
+            // Uppdatera timerns visning
+            timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}.${hundredths.toString().padStart(2, '0')}`;
+        }
+
+        // Lägg till den senaste tiden i listan
+        function appendTimeToList(time) {
+            const listItem = document.createElement('li');
+            listItem.textContent = time;
+            timeListElement.prepend(listItem);
+        }
+
+        // Hantera klick-logik för knappen
+        function handleButtonClick() {
+            if (!timerRunning) {
+                // Start eller Återställ och Start
+                if (elapsedTime > 0) {
+                    appendTimeToList(timerElement.textContent);
+                    elapsedTime = 0;
+                    timerElement.textContent = '0:00.00'; // Återställ display
+                }
+                startTime = performance.now();
+                timerInterval = setInterval(updateTimer, 10);
+                timerRunning = true;
+                buttonElement.textContent = 'Stop';
+            } else {
+                // Stoppa timern
+                clearInterval(timerInterval);
+                elapsedTime += performance.now() - startTime;
+                timerRunning = false;
+                buttonElement.textContent = 'Reset & Start';
+            }
+        }
+
+        // Lägg till event listeners för knappen
+        buttonElement.addEventListener('click', handleButtonClick);
+        buttonElement.addEventListener('touchstart', (event) => {
+            event.preventDefault();
+            handleButtonClick();
+        });
+        buttonElement.addEventListener('dragstart', (event) => event.preventDefault());
     }
-  }
 
-  // Add event listener to the button
-  buttonElement.addEventListener('touchstart', handleButtonClick);
-  // Prevent dragging behavior on the button
-  buttonElement.addEventListener('dragstart', (event) => event.preventDefault());
-  buttonElement.addEventListener('mousedown', (event) => event.preventDefault());
+    // Lägg till funktionalitet för "+"-knappen
+    addButton.addEventListener('click', () => {
+        const newTimerContainer = document.createElement('div');
+        newTimerContainer.classList.add('timer-container');
+        newTimerContainer.innerHTML = `
+            <div class="timer">0:00.00</div>
+            <button draggable="false" class="big-red-button">Start</button>
+            <ul class="time-list"></ul>
+        `;
+        timersContainer.appendChild(newTimerContainer);
+        createNewTimer(newTimerContainer, true); // Tillåt borttagning för nya timers
+    });
+
+    // Initial timer för första containern
+    const initialTimerContainer = document.querySelector('.timer-container');
+    if (initialTimerContainer) {
+        createNewTimer(initialTimerContainer, false); // Första timern tillåter inte borttagning
+    }
 </script>
 </body>
 </html>
