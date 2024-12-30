@@ -7,7 +7,6 @@
     <style>
         body {
             margin: 0;
-            height: 100vh;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -238,23 +237,25 @@
 
         // Hantera klick-logik för knappen
         function handleButtonClick() {
-            if (!timerRunning) {
-                // Start eller Återställ och Start
-                if (elapsedTime > 0) {
-                    appendTimeToList(timerElement.textContent);
-                    elapsedTime = 0;
-                    timerElement.textContent = '0:00.00'; // Återställ display
-                }
+            if (timerRunning) {
+                // Timer is running - Stop it
+                clearInterval(timerInterval);
+                elapsedTime += performance.now() - startTime;
+                timerRunning = false;
+
+                // Add the final stopped time to the list
+                appendTimeToList(timerElement.textContent);
+
+                // Reset elapsed time for the next start
+                elapsedTime = 0;
+
+                buttonElement.textContent = 'Reset & Start';
+            } else {
+                // Timer is not running - Start it
                 startTime = performance.now();
                 timerInterval = setInterval(updateTimer, 10);
                 timerRunning = true;
                 buttonElement.textContent = 'Stop';
-            } else {
-                // Stoppa timern
-                clearInterval(timerInterval);
-                elapsedTime += performance.now() - startTime;
-                timerRunning = false;
-                buttonElement.textContent = 'Reset & Start';
             }
         }
 
