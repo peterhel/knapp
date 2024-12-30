@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>Big Red Button with Timer</title>
     <style>
         body {
@@ -41,15 +41,15 @@
         .big-red-button {
             user-select: none;
             width: 40vw;
-            height: 40vw;
             max-width: 150px;
-            max-height: 150px;
             min-width: 100px;
-            min-height: 100px;
+            min-height: 50px;
+            padding: 10px 0;
             background-color: red;
+            margin-bottom: 20px;
             color: white;
             border: none;
-            border-radius: 50%;
+            border-radius: 15px;
             font-size: 1.2em;
             cursor: pointer;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
@@ -118,6 +118,7 @@
             font-size: 1em;
             margin: 5px 0;
         }
+
         .aggregated-time {
             font-size: 1.2em;
             font-weight: bold;
@@ -125,6 +126,7 @@
             margin-bottom: 10px;
             font-family: Arial, sans-serif;
         }
+
         #main {
             display: flex;
             width: 100%;
@@ -137,7 +139,7 @@
         <!-- Första timern utan minusknapp -->
         <div class="timer-container">
             <div class="timer">0:00.00</div>
-            <button draggable="false" class="big-red-button">Start</button>
+            <button class="big-red-button" draggable="false">Start</button>
             <ul class="time-list"></ul>
         </div>
     </div>
@@ -202,29 +204,36 @@
         // Update the aggregated time
         function updateAggregatedTime() {
             let totalMilliseconds = 0;
+
             // Loop through all times in the list
             const allTimes = timeListElement.querySelectorAll('li');
             allTimes.forEach((item) => {
                 totalMilliseconds += parseTimeToMilliseconds(item.textContent);
             });
 
+            // If the timer is running, add its current time to the total
+            if (timerRunning) {
+                totalMilliseconds += performance.now() - startTime + elapsedTime;
+            }
+
             // Update the aggregated time display
-            aggregatedTimeElement.textContent = `Total Time: ${formatMillisecondsToTime(
-                totalMilliseconds
-            )}`;
+            aggregatedTimeElement.textContent = `Total Time: ${formatMillisecondsToTime(totalMilliseconds)}`;
         }
 
         // Uppdatera displayen för denna timer
         function updateTimer() {
-            const diff = performance.now() - startTime + elapsedTime; // Total tid
+            const diff = performance.now() - startTime + elapsedTime; // Total time
             const minutes = Math.floor(diff / (1000 * 60));
             const seconds = Math.floor((diff % (1000 * 60)) / 1000);
             const hundredths = Math.floor((diff % 1000) / 10);
 
-            // Uppdatera timerns visning
-            timerElement.textContent = `${minutes}:${seconds
+            // Update the timer's own display
+            timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}.${hundredths
                 .toString()
-                .padStart(2, '0')}.${hundredths.toString().padStart(2, '0')}`;
+                .padStart(2, '0')}`;
+
+            // Update the aggregated time during the interval
+            updateAggregatedTime();
         }
 
         // Lägg till den senaste tiden i listan
