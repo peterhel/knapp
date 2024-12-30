@@ -19,7 +19,7 @@
             display: flex;
             flex-direction: row;
             justify-content: space-between;
-            align-items: center;
+            align-items: start;
             width: 100%;
             padding: 0 20px;
             box-sizing: border-box;
@@ -119,9 +119,16 @@
             font-size: 1em;
             margin: 5px 0;
         }
-
+        .aggregated-time {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 10px;
+            font-family: Arial, sans-serif;
+        }
         #main {
             display: flex;
+            width: 100%;
         }
     </style>
 </head>
@@ -153,6 +160,12 @@
         const buttonElement = container.querySelector('.big-red-button');
         const timeListElement = container.querySelector('.time-list');
 
+        // Add element to display aggregated time above the list
+        const aggregatedTimeElement = document.createElement('div');
+        aggregatedTimeElement.classList.add('aggregated-time');
+        aggregatedTimeElement.textContent = 'Total Time: 0:00.00';
+        container.insertBefore(aggregatedTimeElement, timeListElement);
+
         // Hantera borttagning av timer om det tillåts
         if (allowRemove) {
             const removeButton = document.createElement('button');
@@ -166,6 +179,42 @@
             });
         }
 
+        // Helper function to parse time strings into milliseconds
+        function parseTimeToMilliseconds(timeString) {
+            const [minutes, rest] = timeString.split(':');
+            const [seconds, hundredths] = rest.split('.');
+            return (
+                parseInt(minutes, 10) * 60 * 1000 +
+                parseInt(seconds, 10) * 1000 +
+                parseInt(hundredths, 10) * 10
+            );
+        }
+
+        // Helper function to format milliseconds into time string
+        function formatMillisecondsToTime(ms) {
+            const minutes = Math.floor(ms / (1000 * 60));
+            const seconds = Math.floor((ms % (1000 * 60)) / 1000);
+            const hundredths = Math.floor((ms % 1000) / 10);
+            return `${minutes}:${seconds.toString().padStart(2, '0')}.${hundredths
+                .toString()
+                .padStart(2, '0')}`;
+        }
+
+        // Update the aggregated time
+        function updateAggregatedTime() {
+            let totalMilliseconds = 0;
+            // Loop through all times in the list
+            const allTimes = timeListElement.querySelectorAll('li');
+            allTimes.forEach((item) => {
+                totalMilliseconds += parseTimeToMilliseconds(item.textContent);
+            });
+
+            // Update the aggregated time display
+            aggregatedTimeElement.textContent = `Total Time: ${formatMillisecondsToTime(
+                totalMilliseconds
+            )}`;
+        }
+
         // Uppdatera displayen för denna timer
         function updateTimer() {
             const diff = performance.now() - startTime + elapsedTime; // Total tid
@@ -174,7 +223,9 @@
             const hundredths = Math.floor((diff % 1000) / 10);
 
             // Uppdatera timerns visning
-            timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}.${hundredths.toString().padStart(2, '0')}`;
+            timerElement.textContent = `${minutes}:${seconds
+                .toString()
+                .padStart(2, '0')}.${hundredths.toString().padStart(2, '0')}`;
         }
 
         // Lägg till den senaste tiden i listan
@@ -182,6 +233,7 @@
             const listItem = document.createElement('li');
             listItem.textContent = time;
             timeListElement.prepend(listItem);
+            updateAggregatedTime(); // Update aggregated time when a new time is added
         }
 
         // Hantera klick-logik för knappen
