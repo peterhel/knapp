@@ -134,12 +134,14 @@
     </style>
 </head>
 <body>
+<audio id="start-sound" src="race-start-beeps-125125.mp3"></audio>
 <div id="main">
     <div id="timers">
         <!-- Första timern utan minusknapp -->
         <div class="timer-container">
             <div class="timer">0:00.00</div>
             <button class="big-red-button" draggable="false">Start</button>
+            <button class="start-sound-button" draggable="false">Start with Sound</button>
             <ul class="time-list"></ul>
         </div>
     </div>
@@ -149,38 +151,23 @@
     const addButton = document.getElementById('add');
     const timersContainer = document.getElementById('timers');
 
-    // Funktion för att skapa en ny individuell timer
     function createNewTimer(container, allowRemove = true) {
         let startTime = 0;
         let elapsedTime = 0;
         let timerRunning = false;
         let timerInterval = null;
 
-        // Hitta elementen i containern
         const timerElement = container.querySelector('.timer');
-        const buttonElement = container.querySelector('.big-red-button');
+        const startButton = container.querySelector('.big-red-button');
+        const soundStartButton = container.querySelector('.start-sound-button');
         const timeListElement = container.querySelector('.time-list');
+        const audioElement = document.getElementById('start-sound'); // Reference to <audio>
 
-        // Add element to display aggregated time above the list
         const aggregatedTimeElement = document.createElement('div');
         aggregatedTimeElement.classList.add('aggregated-time');
         aggregatedTimeElement.textContent = 'Total Time: 0:00.00';
         container.insertBefore(aggregatedTimeElement, timeListElement);
 
-        // Hantera borttagning av timer om det tillåts
-        if (allowRemove) {
-            const removeButton = document.createElement('button');
-            removeButton.classList.add('remove-button');
-            removeButton.textContent = '-';
-            container.appendChild(removeButton);
-
-            // Eventlistener: Ta bort containern
-            removeButton.addEventListener('click', () => {
-                container.remove();
-            });
-        }
-
-        // Helper function to parse time strings into milliseconds
         function parseTimeToMilliseconds(timeString) {
             const [minutes, rest] = timeString.split(':');
             const [seconds, hundredths] = rest.split('.');
@@ -191,7 +178,6 @@
             );
         }
 
-        // Helper function to format milliseconds into time string
         function formatMillisecondsToTime(ms) {
             const minutes = Math.floor(ms / (1000 * 60));
             const seconds = Math.floor((ms % (1000 * 60)) / 1000);
@@ -201,80 +187,80 @@
                 .padStart(2, '0')}`;
         }
 
-        // Update the aggregated time
         function updateAggregatedTime() {
             let totalMilliseconds = 0;
-
-            // Loop through all times in the list
             const allTimes = timeListElement.querySelectorAll('li');
             allTimes.forEach((item) => {
                 totalMilliseconds += parseTimeToMilliseconds(item.textContent);
             });
 
-            // If the timer is running, add its current time to the total
             if (timerRunning) {
                 totalMilliseconds += performance.now() - startTime + elapsedTime;
             }
 
-            // Update the aggregated time display
             aggregatedTimeElement.textContent = `Total Time: ${formatMillisecondsToTime(totalMilliseconds)}`;
         }
 
-        // Uppdatera displayen för denna timer
         function updateTimer() {
-            const diff = performance.now() - startTime + elapsedTime; // Total time
+            const diff = performance.now() - startTime + elapsedTime;
             const minutes = Math.floor(diff / (1000 * 60));
             const seconds = Math.floor((diff % (1000 * 60)) / 1000);
             const hundredths = Math.floor((diff % 1000) / 10);
 
-            // Update the timer's own display
             timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}.${hundredths
                 .toString()
                 .padStart(2, '0')}`;
 
-            // Update the aggregated time during the interval
             updateAggregatedTime();
         }
 
-        // Lägg till den senaste tiden i listan
         function appendTimeToList(time) {
             const listItem = document.createElement('li');
             listItem.textContent = time;
             timeListElement.prepend(listItem);
-            updateAggregatedTime(); // Update aggregated time when a new time is added
+            updateAggregatedTime();
         }
 
-        // Hantera klick-logik för knappen
-        function handleButtonClick() {
+        function handleStartButtonClick() {
             if (timerRunning) {
-                // Timer is running - Stop it
                 clearInterval(timerInterval);
                 elapsedTime += performance.now() - startTime;
                 timerRunning = false;
 
-                // Add the final stopped time to the list
                 appendTimeToList(timerElement.textContent);
 
-                // Reset elapsed time for the next start
                 elapsedTime = 0;
 
-                buttonElement.textContent = 'Reset & Start';
+                startButton.textContent = 'Reset & Start';
             } else {
-                // Timer is not running - Start it
                 startTime = performance.now();
                 timerInterval = setInterval(updateTimer, 10);
                 timerRunning = true;
-                buttonElement.textContent = 'Stop';
+                startButton.textContent = 'Stop';
             }
         }
 
-        // Lägg till event listeners för knappen
-        buttonElement.addEventListener('click', handleButtonClick);
-        buttonElement.addEventListener('touchstart', (event) => {
+        function handleSoundStartButtonClick() {
+            audioElement.currentTime = 0; // Reset audio to start
+            audioElement.play(); // Play the MP3 file
+
+            // Wait until the audio has played for 2 seconds, then start the timer
+            setTimeout(() => {
+                if (!timerRunning) {
+                    handleStartButtonClick(); // Start the timer
+                }
+            }, 3000); // 2000 milliseconds = 2 seconds
+        }
+
+        startButton.addEventListener('click', handleStartButtonClick);
+        soundStartButton.addEventListener('click', handleSoundStartButtonClick);
+
+        startButton.addEventListener('touchstart', (event) => {
             event.preventDefault();
-            handleButtonClick();
+            handleStartButtonClick();
         });
-        buttonElement.addEventListener('dragstart', (event) => event.preventDefault());
+
+        startButton.addEventListener('dragstart', (event) => event.preventDefault());
     }
 
     // Lägg till funktionalitet för "+"-knappen
