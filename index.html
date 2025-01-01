@@ -42,14 +42,15 @@
             user-select: none;
             width: 40vw;
             max-width: 150px;
-            min-width: 100px;
-            min-height: 50px;
+            min-width: 150px;
+            max-height: 150px;
+            min-height: 150px;
             padding: 10px 0;
             background-color: red;
             margin-bottom: 20px;
             color: white;
             border: none;
-            border-radius: 15px;
+            border-radius: 50%;
             font-size: 1.2em;
             cursor: pointer;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
@@ -81,7 +82,7 @@
             transition: transform 0.2s, box-shadow 0.2s;
         }
 
-        .remove-button {
+        .start-sound-button, .remove-button {
             background-color: #ff4d4d;
             color: white;
             border: none;
@@ -136,154 +137,293 @@
 <body>
 <audio id="start-sound" src="race-start-beeps-125125.mp3"></audio>
 <div id="main">
+    <button id="master-start" style="font-size: 4rem" draggable="false">🔊</button>
     <div id="timers">
         <!-- Första timern utan minusknapp -->
-        <div class="timer-container">
-            <div class="timer">0:00.00</div>
-            <button class="big-red-button" draggable="false">Start</button>
-            <button class="start-sound-button" draggable="false">Start with Sound</button>
-            <ul class="time-list"></ul>
-        </div>
     </div>
     <button id="add">+</button>
 </div>
 <script>
     const addButton = document.getElementById('add');
     const timersContainer = document.getElementById('timers');
+    const masterStartButton = document.getElementById('master-start'); // Master Start button
+    const audioElement = document.getElementById('start-sound'); // Reference to sound element
 
-    function createNewTimer(container, allowRemove = true) {
+    // Hold all timers
+    const timers = [];
+
+    // Fetch timers from localStorage on page load
+    function loadTimersFromLocalStorage() {
+        const savedTimers = JSON.parse(localStorage.getItem('timers')) || [];
+        savedTimers.forEach((timerState) => {
+            createNewTimerFromState(timerState);
+        });
+    }
+
+    // Save timers to localStorage
+    function saveTimersToLocalStorage() {
+        const timerStates = timers.map((timer) => {
+            return {
+                elapsedTime: timer.getElapsedTime(),
+                history: timer.getHistory()
+            };
+        });
+        localStorage.setItem('timers', JSON.stringify(timerStates));
+    }
+
+    // Function to create new timers from saved state
+    function createNewTimerFromState(state) {
+        const newTimerContainer = document.createElement('div');
+        newTimerContainer.classList.add('timer-container');
+        newTimerContainer.innerHTML = `
+        <div class="timer">${formatMillisecondsToTime(state.elapsedTime)}</div>
+        <button class="big-red-button" draggable="false">Start</button>
+        <ul class="time-list"></ul>
+    `;
+
+        const timeListElement = newTimerContainer.querySelector('.time-list');
+
+        // Restore timer history and ensure it's displayed properly
+        state.history.forEach((time) => {
+            const listItem = document.createElement('li');
+            listItem.textContent = time;
+            timeListElement.prepend(listItem); // Use prepend for reverse chronological order
+        });
+
+        // Add the reset button
+        const resetButton = document.createElement('button');
+        resetButton.textContent = 'Reset';
+        resetButton.classList.add('reset-button');
+        resetButton.style.cssText = `
+        background-color: orange;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 5px 10px;
+        font-size: 0.9em;
+        margin-top: 5px;
+        cursor: pointer;
+    `;
+        resetButton.addEventListener('click', () => {
+            clearTimer(newTimerContainer); // Resets the timer
+        });
+
+        // Add the remove button
+        const removeButton = document.createElement('button');
+        removeButton.textContent = 'Remove';
+        removeButton.classList.add('remove-button');
+        removeButton.style.cssText = `
+        background-color: red;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 5px 10px;
+        font-size: 0.9em;
+        margin-top: 5px;
+        cursor: pointer;
+    `;
+        removeButton.addEventListener('click', () => {
+            timersContainer.removeChild(newTimerContainer); // Remove the timer from UI
+            saveTimersToLocalStorage(); // Save changes to localStorage
+        });
+
+        // Append buttons
+        // newTimerContainer.appendChild(resetButton);
+        // newTimerContainer.appendChild(removeButton);
+
+        timersContainer.appendChild(newTimerContainer);
+        createNewTimer(newTimerContainer, true, state); // Initialize the timer with correct state
+    }
+    // Function to convert milliseconds to timer format
+    function formatMillisecondsToTime(ms) {
+        const minutes = Math.floor(ms / (1000 * 60));
+        const seconds = Math.floor((ms % (1000 * 60)) / 1000);
+        const hundredths = Math.floor((ms % 1000) / 10);
+        return `${minutes}:${seconds.toString().padStart(2, '0')}.${hundredths.toString().padStart(2, '0')}`;
+    }
+
+    // Function to create a new timer
+    function createNewTimer(container, allowRemove = true, state = null) {
         let startTime = 0;
-        let elapsedTime = 0;
+        let elapsedTime = state?.elapsedTime || 0; // Load elapsed time if provided
         let timerRunning = false;
         let timerInterval = null;
+        const history = state?.history || [];
 
         const timerElement = container.querySelector('.timer');
         const startButton = container.querySelector('.big-red-button');
-        const soundStartButton = container.querySelector('.start-sound-button');
         const timeListElement = container.querySelector('.time-list');
-        const audioElement = document.getElementById('start-sound'); // Reference to <audio>
 
-        const aggregatedTimeElement = document.createElement('div');
-        aggregatedTimeElement.classList.add('aggregated-time');
-        aggregatedTimeElement.textContent = 'Total Time: 0:00.00';
-        container.insertBefore(aggregatedTimeElement, timeListElement);
+        // Create Reset button
+        const resetButton = document.createElement('button');
+        resetButton.textContent = 'Reset';
+        resetButton.classList.add('reset-button');
+        resetButton.style.cssText = `
+        background-color: orange;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 5px 10px;
+        font-size: 0.9em;
+        margin-top: 5px;
+        cursor: pointer;
+    `;
 
-        function parseTimeToMilliseconds(timeString) {
-            const [minutes, rest] = timeString.split(':');
-            const [seconds, hundredths] = rest.split('.');
-            return (
-                parseInt(minutes, 10) * 60 * 1000 +
-                parseInt(seconds, 10) * 1000 +
-                parseInt(hundredths, 10) * 10
-            );
-        }
+        // Create Remove button
+        const removeButton = document.createElement('button');
+        removeButton.textContent = 'rm';
+        removeButton.classList.add('remove-button');
+        removeButton.style.cssText = `
+        background-color: red;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 5px 10px;
+        font-size: 0.9em;
+        margin-top: 5px;
+        cursor: pointer;
+    `;
 
-        function formatMillisecondsToTime(ms) {
-            const minutes = Math.floor(ms / (1000 * 60));
-            const seconds = Math.floor((ms % (1000 * 60)) / 1000);
-            const hundredths = Math.floor((ms % 1000) / 10);
-            return `${minutes}:${seconds.toString().padStart(2, '0')}.${hundredths
-                .toString()
-                .padStart(2, '0')}`;
-        }
-
-        function updateAggregatedTime() {
-            let totalMilliseconds = 0;
-            const allTimes = timeListElement.querySelectorAll('li');
-            allTimes.forEach((item) => {
-                totalMilliseconds += parseTimeToMilliseconds(item.textContent);
-            });
-
+        // Add Reset button functionality
+        resetButton.addEventListener('click', () => {
             if (timerRunning) {
-                totalMilliseconds += performance.now() - startTime + elapsedTime;
+                // Stop the timer before resetting
+                clearInterval(timerInterval);
+                timerRunning = false;
+                startButton.textContent = 'Start';
             }
+            elapsedTime = 0;
+            timerElement.textContent = '0:00.00'; // Reset timer display
+            history.length = 0; // Clear history
+            timeListElement.innerHTML = ''; // Remove all list items
+            saveTimersToLocalStorage(); // Update localStorage
+        });
 
-            aggregatedTimeElement.textContent = `Total Time: ${formatMillisecondsToTime(totalMilliseconds)}`;
-        }
+        // Add Remove button functionality
+        removeButton.addEventListener('click', () => {
+            const timerIndex = Array.from(timersContainer.children).indexOf(container);
+            timersContainer.removeChild(container); // Remove timer container
+            if (timerIndex > -1) {
+                timers.splice(timerIndex, 1); // Remove timer from timers array
+                saveTimersToLocalStorage(); // Update localStorage
+            }
+        });
 
-        function updateTimer() {
+        function updateTimerDisplay() {
             const diff = performance.now() - startTime + elapsedTime;
-            const minutes = Math.floor(diff / (1000 * 60));
-            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-            const hundredths = Math.floor((diff % 1000) / 10);
-
-            timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}.${hundredths
-                .toString()
-                .padStart(2, '0')}`;
-
-            updateAggregatedTime();
+            timerElement.textContent = formatMillisecondsToTime(diff);
         }
 
-        function appendTimeToList(time) {
-            const listItem = document.createElement('li');
-            listItem.textContent = time;
-            timeListElement.prepend(listItem);
-            updateAggregatedTime();
-        }
-
+        // Click handler for Start/Stop button
         function handleStartButtonClick() {
             if (timerRunning) {
                 clearInterval(timerInterval);
                 elapsedTime += performance.now() - startTime;
                 timerRunning = false;
+                startButton.textContent = 'Start';
 
-                appendTimeToList(timerElement.textContent);
+                // Save time to history
+                const currentTime = formatMillisecondsToTime(elapsedTime);
+                history.unshift(currentTime); // Add most recent time to the top of the history
 
-                elapsedTime = 0;
+                // Update UI with new time
+                const listItem = document.createElement('li');
+                listItem.textContent = currentTime;
+                timeListElement.prepend(listItem);
 
-                startButton.textContent = 'Reset & Start';
+                saveTimersToLocalStorage(); // Update localStorage
             } else {
                 startTime = performance.now();
-                timerInterval = setInterval(updateTimer, 10);
+                timerInterval = setInterval(updateTimerDisplay, 10);
                 timerRunning = true;
                 startButton.textContent = 'Stop';
             }
         }
 
-        function handleSoundStartButtonClick() {
-            audioElement.currentTime = 0; // Reset audio to start
-            audioElement.play(); // Play the MP3 file
-            audioElement.addEventListener('play', () => {
-                setTimeout(() => {
-                    if (!timerRunning) {
-                        handleStartButtonClick(); // Start the timer
-                    }
-                }, 3000); // 2000 milliseconds = 2 seconds
-            }, {
-                once: true,
-            });
-            // Wait until the audio has played for 2 seconds, then start the timer
-        }
-
         startButton.addEventListener('click', handleStartButtonClick);
-        soundStartButton.addEventListener('click', handleSoundStartButtonClick);
 
-        startButton.addEventListener('touchstart', (event) => {
-            event.preventDefault();
-            handleStartButtonClick();
+        timers.push({
+            startButton,
+            start() {
+                if (!timerRunning) {
+                    startTime = performance.now();
+                    timerInterval = setInterval(updateTimerDisplay, 10);
+                    timerRunning = true;
+                    startButton.textContent = 'Stop';
+                }
+            },
+            stop() {
+                if (timerRunning) {
+                    clearInterval(timerInterval);
+                    elapsedTime += performance.now() - startTime;
+                    timerRunning = false;
+                    startButton.textContent = 'Start';
+                }
+            },
+            isRunning() {
+                return timerRunning;
+            },
+            getElapsedTime() {
+                return elapsedTime;
+            },
+            getHistory() {
+                return history;
+            }
         });
 
-        startButton.addEventListener('dragstart', (event) => event.preventDefault());
+        // Append Reset and Remove buttons to the timer container
+        container.appendChild(resetButton);
+        if (allowRemove) {
+            container.appendChild(removeButton);
+        }
+
+        // Save timers whenever a new one is added
+        saveTimersToLocalStorage();
     }
 
-    // Lägg till funktionalitet för "+"-knappen
+    // Add functionality for the "+" button to create new timers
     addButton.addEventListener('click', () => {
         const newTimerContainer = document.createElement('div');
         newTimerContainer.classList.add('timer-container');
         newTimerContainer.innerHTML = `
-            <div class="timer">0:00.00</div>
-            <button draggable="false" class="big-red-button">Start</button>
-            <ul class="time-list"></ul>
-        `;
+        <div class="timer">0:00.00</div>
+        <button class="big-red-button" draggable="false">Start</button>
+        <ul class="time-list"></ul>
+    `;
         timersContainer.appendChild(newTimerContainer);
-        createNewTimer(newTimerContainer, true); // Tillåt borttagning för nya timers
+        createNewTimer(newTimerContainer, true);
     });
 
-    // Initial timer för första containern
-    const initialTimerContainer = document.querySelector('.timer-container');
-    if (initialTimerContainer) {
-        createNewTimer(initialTimerContainer, false); // Första timern tillåter inte borttagning
-    }
+    // Master Start button logic to trigger all timers after playing sound
+    masterStartButton.addEventListener('click', () => {
+        let isRunning = false;
+        timers.forEach((timer) => {
+            if (timer.isRunning()) {
+                timer.stop();
+                isRunning = true;
+            }
+        });
+
+        if (isRunning) {
+            return
+        }
+
+        // Play sound
+        audioElement.currentTime = 0;
+        audioElement.play();
+
+        // After 3 seconds, start all timers
+        setTimeout(() => {
+            timers.forEach((timer) => {
+                if (!timer.isRunning()) {
+                    timer.start();
+                }
+            });
+        }, 3000);
+    });
+
+    // Load existing timers from localStorage on page load
+    loadTimersFromLocalStorage();
 </script>
 </body>
 </html>
