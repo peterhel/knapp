@@ -243,13 +243,16 @@
         function handleSoundStartButtonClick() {
             audioElement.currentTime = 0; // Reset audio to start
             audioElement.play(); // Play the MP3 file
-
+            audioElement.addEventListener('play', () => {
+                setTimeout(() => {
+                    if (!timerRunning) {
+                        handleStartButtonClick(); // Start the timer
+                    }
+                }, 3000); // 2000 milliseconds = 2 seconds
+            }, {
+                once: true,
+            });
             // Wait until the audio has played for 2 seconds, then start the timer
-            setTimeout(() => {
-                if (!timerRunning) {
-                    handleStartButtonClick(); // Start the timer
-                }
-            }, 3000); // 2000 milliseconds = 2 seconds
         }
 
         startButton.addEventListener('click', handleStartButtonClick);
